@@ -13,7 +13,7 @@ source: { kind: "plugin", plugin: PLUGIN_ID, form: "instructions" }
 写侧不校验，所以这类行能落盘；读侧（`dsh-session-format-v3-to-v4` 的 artifact 校验）才抛
 `format v4 message requires a producer-owned source kind`，表现为「能进 UI、一发消息就 本轮运行失败」。
 
-历史做法是用 `D:\dsh\fix-v4-source-kind.py` 逐个改插件文件——但插件装/更新（插件管理页、`dsh plugin add`）会把文件还原，补丁丢失，于是反复复发（第 4 次）。
+历史做法是用 `<DSH_INSTALL>\fix-v4-source-kind.py` 逐个改插件文件——但插件装/更新（插件管理页、`dsh plugin add`）会把文件还原，补丁丢失，于是反复复发（第 4 次）。
 
 本插件改用**运行时收口**：所有消息最终都经由 `Session.prototype.append` 落盘，护栏在这一层做规范化。插件文件被还原也不影响——它产生什么形状，落盘的永远是 v4 合法形状。
 
@@ -33,14 +33,16 @@ source: { kind: "plugin", plugin: PLUGIN_ID, form: "instructions" }
 6. 幂等：同一原型只包一次（`Symbol.for("dsh-v4-source-guard/patched")`），非裸 source 原样返回同一引用（不复制、不改身份）。
 7. 任何异常都退回原始数据（`try/catch` → 原样 append），**不会**因为护栏让一轮对话失败。
 8. 启动时还会异步补文件：`apply()` 2 秒后调用
-   `python D:\dsh\fix-v4-source-kind.py --profile C:\Users\lin\.dsh\profiles\desktop`
+   `python <DSH_INSTALL>\fix-v4-source-kind.py --profile <DSH_HOME>\profiles\desktop`
    （`python` 不在 PATH 时回退 `py -3`；脚本不存在则跳过）。这样插件管理页装/更新后，
    即使没人手动跑修复，下一次启动也会把被 pnpm store 还原的文件重新打上补丁。
-   路径可用 `DSH_V4_FIX_SCRIPT` / `DSH_V4_PROFILE` 覆盖（测试用）。
+   路径**没有默认值，必须自己配** `DSH_V4_FIX_SCRIPT` / `DSH_V4_PROFILE`；不配就跳过这一步
+   （内存里的归一化照常工作）。修复脚本是站点特定的，给不出通用默认值——填错的默认值会
+   让插件静默地去改错目录，比不干活更糟。
 
 ## 三层防护
 
-1. **启动器预修**：`D:\dsh\start-dsh-desktop.ps1` 在启动桌面端之前先跑
+1. **启动器预修**：`<DSH_INSTALL>\start-dsh-desktop.ps1` 在启动桌面端之前先跑
    `fix-v4-source-kind.py --profile ...\desktop`，让本次启动加载的就是已修文件。
 2. **运行时护栏**：本插件的 `append` 收口，插件文件被还原也不会写出非法 source。
 3. **启动自愈**：本插件启动 2 秒后自动重跑文件修复，覆盖不走启动器的启动路径；
@@ -49,30 +51,30 @@ source: { kind: "plugin", plugin: PLUGIN_ID, form: "instructions" }
 ## 安装
 
 ```
-plugin_manager install_bundle  target=D:\dsh\dsh-v4-source-guard
+plugin_manager install_bundle  target=<DSH_INSTALL>\dsh-v4-source-guard
 ```
 
 新装 bundle 走 HMR 直接生效（`application: "applied"`），不需要重启客户端。
-桌面端建议通过 `D:\dsh\start-dsh-desktop.ps1`（或桌面快捷方式）启动；它会先跑文件修复，
+桌面端建议通过 `<DSH_INSTALL>\start-dsh-desktop.ps1`（或桌面快捷方式）启动；它会先跑文件修复，
 再跑版本守卫，最后启动应用。
 
 ## 验证
 
 ```powershell
 # 1) 静态：插件文件已无裸生产者（本护栏不依赖它，但保持干净）
-py -3.12 D:\dsh\scan-v4-source-kind.py --profile C:\Users\lin\.dsh\profiles\desktop
+py -3.12 <DSH_INSTALL>\scan-v4-source-kind.py --profile <DSH_HOME>\profiles\desktop
 
 # 2) 运行时：会话日志里 source kind 全合法
-py -3.12 D:\dsh\.v4-guard-tests\scan-session.py "C:\Users\lin\.dsh\sessions\--D-dsh--\<session-id>\session.v4.jsonl.zstd"
+py -3.12 <DSH_INSTALL>\.v4-guard-tests\scan-session.py "<DSH_HOME>\sessions\--D-dsh--\<session-id>\session.v4.jsonl.zstd"
 
 # 3) 离线自测：10 项断言（假 Session/SessionStore）
-& "C:\Program Files\nodejs\node.exe" D:\dsh\.v4-guard-tests\guard-selftest.mjs
+& node <DSH_INSTALL>\.v4-guard-tests\guard-selftest.mjs
 
 # 4) 启动器预修：看日志中的 v4 fix 行
-Select-String -Path D:\dsh\desktop-launcher.log -Pattern 'v4 fix|\[FIXED\]|\[PATTERN-MISSING\]'
+Select-String -Path <DSH_INSTALL>\desktop-launcher.log -Pattern 'v4 fix|\[FIXED\]|\[PATTERN-MISSING\]'
 ```
 
-自愈测试（不重启桌面端）：把 `D:\dsh\_work\v4-heal-test` 当作假 profile，在其中放一份
+自愈测试（不重启桌面端）：把 `<DSH_INSTALL>\_work\v4-heal-test` 当作假 profile，在其中放一份
 未修补的 `@roarpeng/graphflow/dsh/plugin.mjs`，用 `DSH_V4_PROFILE` 指向它加载本插件，
 2 秒后检查文件里出现 `plugin:${PLUGIN_ID}` 和 `"plugin:graphflow-dsh"`。
 
