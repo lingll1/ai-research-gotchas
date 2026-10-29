@@ -1,0 +1,35 @@
+{
+  "name": "dsh-watchdog-keeper",
+  "version": "0.2.0",
+  "description": "Watches the local dsh watchdog's heartbeat from inside the dsh server. Monitor-only by default (status route + transition logs); keepalive/revive is opt-in via `keepalive: true`. · 守护进程心跳监护：默认只监控并暴露状态接口，保活/重新挂载改为显式开启。",
+  "main": "lib/index.js",
+  "type": "module",
+  "exports": {
+    ".": {
+      "default": "./lib/index.js"
+    },
+    "./cordis.patch.yml": "./cordis.patch.yml",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "lib",
+    "cordis.patch.yml",
+    "README.md"
+  ],
+  "scripts": {
+    "test": "node --test test/keeper.test.js"
+  },
+  "keywords": [
+    "dsh",
+    "deepseek-harness",
+    "cordis",
+    "watchdog",
+    "supervision"
+  ],
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  },
+  "license": "PolyForm-Noncommercial-1.0.0"
+}

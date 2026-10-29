@@ -1,0 +1,4 @@
+- insert:
+    - id: v4-source-guard
+      name: dsh-v4-source-guard
+      config: {}

@@ -1,0 +1,25 @@
+{
+  "name": "dsh-v4-source-guard",
+  "version": "1.0.1",
+  "private": true,
+  "description": "Normalize retired {kind:'plugin', plugin:X} message sources at the Session.append boundary so reinstalling a plugin can no longer break session format v4.",
+  "type": "module",
+  "exports": {
+    ".": "./index.js",
+    "./locale/*.json": "./locale/*.json",
+    "./icon": "./icon.svg"
+  },
+  "files": [
+    "index.js",
+    "cordis.patch.yml",
+    "locale",
+    "icon.svg",
+    "README.md"
+  ],
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  },
+  "license": "PolyForm-Noncommercial-1.0.0"
+}

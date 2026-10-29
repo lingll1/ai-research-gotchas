@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "Session v4 Source Guard",
+    "description": "Rewrites retired {kind:'plugin'} message sources to producer-owned v4 kinds at the Session.append boundary, so reinstalling a plugin cannot break session format v4."
+  }
+}

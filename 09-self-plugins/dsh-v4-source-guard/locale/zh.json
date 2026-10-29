@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "会话 v4 来源守卫",
+    "description": "在 Session.append 入口把已退役的 {kind:'plugin'} 消息来源改写成 v4 生产者自带 kind，插件被重装后也不会再弄坏会话格式 v4。"
+  }
+}

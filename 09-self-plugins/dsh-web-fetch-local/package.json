@@ -1,0 +1,12 @@
+{
+  "name": "dsh-web-fetch-local",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "main": "./lib/index.js",
+  "exports": {
+    ".": "./lib/index.js",
+    "./package.json": "./package.json"
+  },
+  "license": "PolyForm-Noncommercial-1.0.0"
+}
